@@ -4,10 +4,32 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { useAuthStore } from './src/store/useAuthStore';
+import LoginScreen from './src/screens/auth/LoginScreen';
 import MyTicketsScreen from './src/screens/tickets/MyTicketsScreen';
+import TicketReceiptScreen from './src/screens/tickets/TicketReceiptScreen';
 
-// Criação do Stack Principal
-const Stack = createNativeStackNavigator();
+// Tipagem de rotas
+export type RootStackParamList = {
+  Login: undefined;
+  MyTickets: undefined;
+  TicketReceipt: { ticket: any };
+};
+
+const Stack = createNativeStackNavigator<RootStackParamList>();
+
+// Opções de header padrão (tema dark)
+const screenOptions = {
+  headerStyle: {
+    backgroundColor: '#0F0F13',
+  },
+  headerTintColor: '#FFFFFF',
+  headerTitleStyle: {
+    fontWeight: 'bold' as const,
+  },
+  contentStyle: {
+    backgroundColor: '#0F0F13',
+  },
+};
 
 export default function App() {
   const restoreSession = useAuthStore((state: any) => state.restoreSession);
@@ -15,12 +37,12 @@ export default function App() {
   const isAuthenticated = useAuthStore((state: any) => state.isAuthenticated);
 
   useEffect(() => {
-    // Restaura a sessão do usuário de forma segura na inicialização
+    // Restaura a sessão do usuário via Refresh Token na inicialização
     restoreSession();
   }, [restoreSession]);
 
   if (isLoading) {
-    // Exibição de tela de carregamento durante a restauração do token JWT
+    // Tela de splash durante restauração do JWT
     return null; 
   }
 
@@ -28,34 +50,28 @@ export default function App() {
     <SafeAreaProvider>
       <StatusBar barStyle="light-content" backgroundColor="#0F0F13" />
       <NavigationContainer>
-        <Stack.Navigator
-          screenOptions={{
-            headerStyle: {
-              backgroundColor: '#0F0F13',
-            },
-            headerTintColor: '#FFFFFF',
-            headerTitleStyle: {
-              fontWeight: 'bold',
-            },
-            contentStyle: {
-              backgroundColor: '#0F0F13',
-            },
-          }}
-        >
+        <Stack.Navigator screenOptions={screenOptions}>
           {!isAuthenticated ? (
-            // Grupo de Telas de Autenticação (Login fictício/Mock para demonstração)
+            // ─── Telas de Autenticação ───
             <Stack.Screen 
-              name="MyTickets" 
-              component={MyTicketsScreen} 
-              options={{ title: 'CineWeb Ingressos (Modo de Demonstração)' }}
+              name="Login" 
+              component={LoginScreen} 
+              options={{ title: 'CineWeb', headerShown: false }}
             />
           ) : (
-            // Grupo de Telas Privadas do Aplicativo do Cliente
-            <Stack.Screen 
-              name="MyTickets" 
-              component={MyTicketsScreen} 
-              options={{ title: 'Meus Ingressos' }}
-            />
+            // ─── Telas do App Autenticado ───
+            <>
+              <Stack.Screen 
+                name="MyTickets" 
+                component={MyTicketsScreen} 
+                options={{ title: 'Meus Ingressos' }}
+              />
+              <Stack.Screen 
+                name="TicketReceipt" 
+                component={TicketReceiptScreen as any} 
+                options={{ title: 'Comprovante' }}
+              />
+            </>
           )}
         </Stack.Navigator>
       </NavigationContainer>

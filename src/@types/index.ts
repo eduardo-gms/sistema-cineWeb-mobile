@@ -56,10 +56,26 @@ export interface Usuario {
   id: string;
   nome: string;
   email: string;
-  perfil: 'CUSTOMER';
+  perfil: 'ADMIN' | 'CUSTOMER';
 }
 
 export interface AuthResponse {
-  token: string;
+  accessToken: string;
+  refreshToken: string;
   user: Usuario;
+}
+
+export interface TokenRefreshResponse {
+  accessToken: string;
+  refreshToken: string;
+}
+
+export interface Pedido {
+  id: string;
+  usuarioId?: string;
+  valorTotal: number;
+  qtdInteira: number;
+  qtdMeia: number;
+  dataHora: string;
+  ingressos: Ingresso[];
 }

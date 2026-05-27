@@ -1,6 +1,6 @@
 import api from './api';
 import storage from './storage';
-import { Ingresso } from '../@types';
+import { Ingresso, Pedido } from '../@types';
 
 export interface SyncTicketsResult {
   data: Ingresso[];
@@ -16,15 +16,19 @@ export const ticketService = {
    */
   async syncTickets(): Promise<SyncTicketsResult> {
     try {
-      // 1. Tenta buscar da API REST (com timeout curto para detecção ágil de offline)
-      // Em produção real, o endpoint pode ser '/ingressos/meus' ou '/pedidos/meus':
-      // const response = await api.get<Ingresso[]>('/ingressos/meus', { timeout: 4000 });
-      // const tickets = response.data;
+      // 1. Busca os pedidos do usuário autenticado na API
+      const response = await api.get<Pedido[]>('/pedidos/meus', { timeout: 8000 });
+      const pedidos = response.data;
 
-      // Para fins de demonstração robusta, simulamos a requisição de API com sucesso:
-      const tickets = await this._fetchMockTicketsFromAPI();
+      // 2. Extrai todos os ingressos dos pedidos, enriquecidos com dados de sessão/filme/sala
+      const tickets: Ingresso[] = pedidos.flatMap((pedido) =>
+        (pedido.ingressos || []).map((ing) => ({
+          ...ing,
+          pedidoId: pedido.id,
+        })),
+      );
 
-      // 2. Sincroniza salvando a lista atualizada localmente no cache seguro
+      // 3. Salva no cache local para acesso offline
       await storage.saveTicketsCache(tickets);
 
       return {
@@ -34,7 +38,7 @@ export const ticketService = {
     } catch (error) {
       console.warn('Falha ao conectar com a API CineWeb. Iniciando modo offline (DB Sync)...');
 
-      // 3. Em caso de falha de conexão, recupera o cache local no dispositivo
+      // 4. Em caso de falha, recupera o cache local
       const cachedTickets = await storage.getTicketsCache<Ingresso>();
 
       if (cachedTickets && cachedTickets.length > 0) {
@@ -44,7 +48,7 @@ export const ticketService = {
         };
       }
 
-      // Se não há dados na API e nem no cache
+      // Sem dados na API e sem cache
       return {
         data: [],
         isOfflineData: true,
@@ -54,83 +58,40 @@ export const ticketService = {
   },
 
   /**
-   * Mock auxiliar para simular retorno de rede da API
+   * Sincroniza operações pendentes na fila offline.
+   * Chamado quando a conectividade é restaurada.
    */
-  _fetchMockTicketsFromAPI(): Promise<Ingresso[]> {
-    return new Promise<Ingresso[]>((resolve: any) => {
-      setTimeout(() => {
-        resolve([
-          {
-            id: 'ticket-001-avengers',
-            pedidoId: 'pedido-987',
-            sessaoId: 'sessao-11',
-            poltrona: 'G-12',
-            tipo: 'Inteira',
-            valorPago: 32.0,
-            sessao: {
-              id: 'sessao-11',
-              filmeId: 'filme-avengers',
-              salaId: 'sala-3',
-              data: new Date().toISOString(), // Hoje
-              horario: '20:30',
-              valorIngresso: 32.0,
-              filme: {
-                id: 'filme-avengers',
-                titulo: 'Vingadores: Ultimato',
-                duracao: 181,
-                sinopse: 'Após Thanos eliminar metade das criaturas vivas, os Vingadores devem se reunir para reverter suas ações e restaurar a harmonia no universo.',
-                elenco: 'Robert Downey Jr., Chris Evans, Mark Ruffalo, Chris Hemsworth',
-                generoId: 'genero-acao',
-                classificacaoEtaria: '14 Anos',
-                dataInicioExibicao: '2026-04-01',
-                dataFimExibicao: '2026-06-30',
-                status: 'Em Cartaz',
-                genero: { id: 'genero-acao', nome: 'Ação / Ficção' }
-              },
-              sala: {
-                id: 'sala-3',
-                numero: 3,
-                capacidade: 180
-              }
-            }
-          },
-          {
-            id: 'ticket-002-dune',
-            pedidoId: 'pedido-988',
-            sessaoId: 'sessao-12',
-            poltrona: 'E-08',
-            tipo: 'Meia',
-            valorPago: 18.0,
-            sessao: {
-              id: 'sessao-12',
-              filmeId: 'filme-dune',
-              salaId: 'sala-1',
-              data: new Date(Date.now() + 86400000).toISOString(), // Amanhã
-              horario: '17:00',
-              valorIngresso: 36.0,
-              filme: {
-                id: 'filme-dune',
-                titulo: 'Duna: Parte Dois',
-                duracao: 166,
-                sinopse: 'Paul Atreides se une a Chani e aos Fremen enquanto busca vingança contra os conspiradores que destruíram sua família.',
-                elenco: 'Timothée Chalamet, Zendaya, Rebecca Ferguson',
-                generoId: 'genero-sci-fi',
-                classificacaoEtaria: '12 Anos',
-                dataInicioExibicao: '2026-05-01',
-                dataFimExibicao: '2026-07-15',
-                status: 'Em Cartaz',
-                genero: { id: 'genero-sci-fi', nome: 'Ficção Científica' }
-              },
-              sala: {
-                id: 'sala-1',
-                numero: 1,
-                capacidade: 220
-              }
-            }
-          }
-        ]);
-      }, 1500); // Latência simulada de rede
-    });
-  }
+  async syncPendingOperations(): Promise<void> {
+    const queue = await storage.getSyncQueue<any>();
+    if (queue.length === 0) return;
+
+    console.log(`Sincronizando ${queue.length} operação(ões) pendente(s)...`);
+
+    const failedOps: any[] = [];
+
+    for (const operation of queue) {
+      try {
+        switch (operation.type) {
+          case 'CREATE_PEDIDO':
+            await api.post('/pedidos', operation.data);
+            break;
+          default:
+            console.warn('Operação desconhecida na fila de sync:', operation.type);
+        }
+      } catch (error) {
+        console.error('Falha ao sincronizar operação:', operation.type, error);
+        failedOps.push(operation);
+      }
+    }
+
+    // Salva apenas as operações que falharam para nova tentativa
+    await storage.saveSyncQueue(failedOps);
+
+    if (failedOps.length === 0) {
+      console.log('Todas as operações offline foram sincronizadas com sucesso!');
+    } else {
+      console.warn(`${failedOps.length} operação(ões) falharam e serão reenviadas.`);
+    }
+  },
 };
 export default ticketService;

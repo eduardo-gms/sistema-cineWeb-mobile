@@ -1,12 +1,13 @@
 import { create } from 'zustand';
 import { Usuario } from '../@types';
 import storage from '../services/storage';
+import authService from '../services/authService';
 
 interface AuthState {
   user: Usuario | null;
   isAuthenticated: boolean;
   isLoading: boolean;
-  login: (token: string, user: Usuario) => Promise<void>;
+  login: (email: string, senha: string) => Promise<void>;
   logout: () => Promise<void>;
   restoreSession: () => Promise<void>;
   updateUser: (user: Usuario) => void;
@@ -19,59 +20,65 @@ export const useAuthStore = create<AuthState>((set: any) => ({
 
   /**
    * Efetua o login do cliente
-   * Armazena o token JWT de forma segura e atualiza o estado global.
+   * Chama a API, armazena ambos os tokens de forma segura e atualiza o estado global.
    */
-  login: async (token: string, user: Usuario) => {
+  login: async (email: string, senha: string) => {
     set({ isLoading: true });
     try {
-      await storage.saveSecureToken(token);
-      set({ user, isAuthenticated: true, isLoading: false });
+      const response = await authService.login(email, senha);
+      
+      // Salva Access Token e Refresh Token no SecureStore (expo-secure-store)
+      await storage.saveTokens(response.accessToken, response.refreshToken);
+      
+      set({ user: response.user, isAuthenticated: true, isLoading: false });
     } catch (error) {
-      console.error('Erro ao processar login na store:', error);
       set({ isLoading: false });
+      throw error; // Propaga para a tela de login tratar
     }
   },
 
   /**
    * Efetua o logout do cliente
-   * Remove o token de segurança, limpa dados locais em cache e limpa o estado.
+   * Revoga refresh token no servidor, limpa tokens seguros e cache local.
    */
   logout: async () => {
     set({ isLoading: true });
     try {
-      await storage.deleteSecureToken();
+      // Tenta revogar o refresh token no servidor
+      await authService.logout();
+    } catch (error) {
+      console.warn('Erro ao revogar token no servidor:', error);
+    } finally {
+      // Sempre limpa localmente, independente do servidor
+      await storage.deleteAllTokens();
       await storage.clearAllCache();
       set({ user: null, isAuthenticated: false, isLoading: false });
-    } catch (error) {
-      console.error('Erro ao efetuar logout na store:', error);
-      set({ isLoading: false });
     }
   },
 
   /**
    * Restaura a sessão ao abrir o aplicativo
-   * Verifica se há um token persistido no hardware e reconstrói o estado reativo.
+   * Usa o Refresh Token para obter novos tokens e buscar o perfil do usuário.
    */
   restoreSession: async () => {
     set({ isLoading: true });
     try {
-      const token = await storage.getSecureToken();
-      if (token) {
-        // Em um cenário de produção real, faríamos um GET /auth/me na API para buscar
-        // o perfil do usuário mais recente com o token ativo.
-        // Simulamos o restabelecimento do perfil do cliente.
-        const mockUser: Usuario = {
-          id: 'user-client-123',
-          nome: 'Fulano de Tal',
-          email: 'cliente@cineweb.com.br',
-          perfil: 'CUSTOMER',
-        };
-        set({ user: mockUser, isAuthenticated: true, isLoading: false });
-      } else {
+      const refreshToken = await storage.getRefreshToken();
+      if (!refreshToken) {
         set({ user: null, isAuthenticated: false, isLoading: false });
+        return;
       }
+
+      // Tenta renovar os tokens
+      const tokens = await authService.refreshTokens(refreshToken);
+      await storage.saveTokens(tokens.accessToken, tokens.refreshToken);
+
+      // Busca o perfil do usuário com o novo access token
+      const user = await authService.getProfile();
+      set({ user, isAuthenticated: true, isLoading: false });
     } catch (error) {
-      console.error('Erro ao restaurar sessão na store:', error);
+      console.warn('Falha ao restaurar sessão. Token expirado ou inválido.');
+      await storage.deleteAllTokens();
       set({ user: null, isAuthenticated: false, isLoading: false });
     }
   },
