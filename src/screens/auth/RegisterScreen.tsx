@@ -12,8 +12,10 @@ import {
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useAuthStore } from '../../store/useAuthStore';
+import api from '../../services/api';
 
-export default function LoginScreen() {
+export default function RegisterScreen() {
+  const [nome, setNome] = useState('');
   const [email, setEmail] = useState('');
   const [senha, setSenha] = useState('');
   const [error, setError] = useState('');
@@ -21,9 +23,14 @@ export default function LoginScreen() {
   const login = useAuthStore((state: any) => state.login);
   const navigation = useNavigation<any>();
 
-  const handleLogin = async () => {
-    if (!email.trim() || !senha.trim()) {
+  const handleRegister = async () => {
+    if (!nome.trim() || !email.trim() || !senha.trim()) {
       setError('Preencha todos os campos.');
+      return;
+    }
+
+    if (senha.length < 6) {
+      setError('A senha deve ter no mínimo 6 caracteres.');
       return;
     }
 
@@ -31,9 +38,12 @@ export default function LoginScreen() {
     setIsSubmitting(true);
 
     try {
+      await api.post('/auth/register', { nome: nome.trim(), email: email.trim(), senha });
+      // Login automático após registro
       await login(email.trim(), senha);
+      // O App.tsx cuidará de fechar a Stack de Login automaticamente via isAuthenticated
     } catch (err: any) {
-      setError(err.message || 'Erro ao realizar login.');
+      setError(err.response?.data?.message || 'Erro ao realizar cadastro.');
     } finally {
       setIsSubmitting(false);
     }
@@ -44,24 +54,30 @@ export default function LoginScreen() {
       style={styles.container}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
-      <ScrollView
-        contentContainerStyle={styles.scrollContent}
-        keyboardShouldPersistTaps="handled"
-      >
-        {/* Logo / Branding */}
+      <ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
         <View style={styles.brandContainer}>
           <Text style={styles.brandIcon}>🎬</Text>
-          <Text style={styles.brandTitle}>CineWeb</Text>
-          <Text style={styles.brandSubtitle}>Acesse sua conta para ver seus ingressos</Text>
+          <Text style={styles.brandTitle}>Cadastro</Text>
+          <Text style={styles.brandSubtitle}>Crie sua conta no CineWeb</Text>
         </View>
 
-        {/* Formulário */}
         <View style={styles.formContainer}>
           {error ? (
             <View style={styles.errorContainer}>
               <Text style={styles.errorText}>{error}</Text>
             </View>
           ) : null}
+
+          <Text style={styles.label}>Nome Completo</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="Seu nome"
+            placeholderTextColor="#5A5A6E"
+            value={nome}
+            onChangeText={setNome}
+            autoCapitalize="words"
+            editable={!isSubmitting}
+          />
 
           <Text style={styles.label}>E-mail</Text>
           <TextInput
@@ -88,26 +104,21 @@ export default function LoginScreen() {
           />
 
           <TouchableOpacity
-            style={[styles.loginButton, isSubmitting && styles.loginButtonDisabled]}
-            onPress={handleLogin}
+            style={[styles.registerButton, isSubmitting && styles.registerButtonDisabled]}
+            onPress={handleRegister}
             disabled={isSubmitting}
             activeOpacity={0.8}
           >
             {isSubmitting ? (
               <ActivityIndicator color="#000" size="small" />
             ) : (
-              <Text style={styles.loginButtonText}>Entrar</Text>
+              <Text style={styles.registerButtonText}>Cadastrar</Text>
             )}
           </TouchableOpacity>
 
-          {/* Links adicionais */}
           <View style={styles.linksContainer}>
-            <TouchableOpacity onPress={() => navigation.navigate('ForgotPassword')} style={styles.linkButton}>
-              <Text style={styles.linkText}>Esqueceu a senha?</Text>
-            </TouchableOpacity>
-            
-            <TouchableOpacity onPress={() => navigation.navigate('Register')} style={styles.linkButton}>
-              <Text style={styles.linkTextHighlight}>Ainda não tem conta? Cadastre-se</Text>
+            <TouchableOpacity onPress={() => navigation.goBack()} style={styles.linkButton}>
+              <Text style={styles.linkText}>Já tem uma conta? <Text style={styles.linkTextHighlight}>Entre aqui</Text></Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -185,7 +196,7 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     marginBottom: 16,
   },
-  loginButton: {
+  registerButton: {
     backgroundColor: '#FFF',
     borderRadius: 10,
     paddingVertical: 14,
@@ -197,10 +208,10 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 6,
   },
-  loginButtonDisabled: {
+  registerButtonDisabled: {
     opacity: 0.6,
   },
-  loginButtonText: {
+  registerButtonText: {
     color: '#000',
     fontSize: 16,
     fontWeight: 'bold',
@@ -219,8 +230,6 @@ const styles = StyleSheet.create({
   },
   linkTextHighlight: {
     color: '#FFFFFF',
-    fontSize: 14,
     fontWeight: 'bold',
-    marginTop: 8,
   },
 });

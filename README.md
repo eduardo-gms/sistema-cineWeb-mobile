@@ -63,13 +63,14 @@ O sistema implementa sincronização inteligente de dados:
 
 ## Funcionalidades
 
-- ✅ Login com email/senha (JWT + Refresh Token)
-- ✅ Restauração automática de sessão
-- ✅ Listagem de ingressos digitais com QR Code
+- ✅ Acesso público para Filmes e Sessões (arquitetura BottomTabs)
+- ✅ Filtros dinâmicos cruzando dados (clique no Filme para filtrar Sessões)
+- ✅ Fluxos completos de Autenticação, Cadastro e Recuperação de Senha
+- ✅ Listagem de ingressos digitais com QR Code e Carrinho de compras
 - ✅ Modo offline (DB Sync via AsyncStorage)
 - ✅ Comprovante de ingresso individual
 - ✅ Pull-to-refresh para sincronização manual
-- ✅ Design dark theme (#0F0F13) consistente
+- ✅ Design dark theme (#0F0F13) minimalista monocromático
 
 ---
 
@@ -134,9 +135,14 @@ docker compose --profile mobile up --build
 
 | Tela | Descrição | Auth? |
 |------|-----------|-------|
+| **FilmesScreen** | Listagem pública de filmes | Não |
+| **SessoesScreen** | Listagem e filtro de sessões | Não |
 | **LoginScreen** | Login com email/senha | Não |
+| **RegisterScreen** | Criação de nova conta | Não |
+| **ForgotPasswordScreen** | Recuperação de senha | Não |
+| **CheckoutScreen** | Finalização de compra | Sim |
 | **MyTicketsScreen** | Lista de ingressos digitais | Sim |
-| **TicketReceiptScreen** | Comprovante individual | Sim |
+| **TicketReceiptScreen** | Comprovante individual QR Code | Sim |
 
 ---
 

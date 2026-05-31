@@ -5,3 +5,11 @@
 {"_e":"metro:config","_t":1779463132770,"serverRoot":"../..\\..","projectRoot":"../..\\..","exporting":false,"flags":{"autolinkingModuleResolution":false,"serverActions":false,"serverComponents":false,"reactCompiler":false,"optimizeGraph":false,"treeshaking":false,"logbox":false}}
 {"_e":"metro:instantiate","_t":1779463262980,"atlas":false,"workers":3,"host":"::","port":8081}
 {"_e":"metro:client_log","_t":1779463287345,"level":"error","data":["Project is incompatible with this version of Expo Go\n\nThis project requires a newer version of Expo Go.\n\nHow to fix this error:\nDownload the latest version of Expo Go from the Play Store."]}
+{"_e":"root:init","_t":1780099897876,"format":"v0-jsonl","version":"56.1.13"}
+{"_e":"env:mode","_t":1780099897889,"nodeEnv":"development","babelEnv":"development","mode":"development"}
+{"_e":"env:load","_t":1780099897892,"mode":"development","files":[],"env":{}}
+{"_e":"devserver:start","_t":1780099900033,"mode":"development","web":true,"baseUrl":"","asyncRoutes":false,"routerRoot":"../../../app","serverComponents":false,"serverActions":false,"serverRendering":false,"apiRoutes":false,"exporting":false}
+{"_e":"metro:config","_t":1780099901922,"serverRoot":"../../..","projectRoot":"../../..","exporting":false,"flags":{"autolinkingModuleResolution":false,"serverActions":false,"serverComponents":false,"reactCompiler":false,"optimizeGraph":false,"treeshaking":false,"logbox":false}}
+{"_e":"metro:instantiate","_t":1780099910626,"atlas":false,"workers":3,"host":"::","port":8081}
+{"_e":"metro:server_log","_t":1780099919652,"level":"error","data":["An unknown error occurred while installing React Native DevTools. Details:\n\n[25241:0529/211150.744629:FATAL:sandbox/linux/suid/client/setuid_sandbox_host.cc:166] The SUID sandbox helper binary was found, but is not configured correctly. Rather than run without sandboxing I'm aborting now. You need to make sure that /home/edu_linux/.cache/dotslash/af/5aa55d5d0401a9f3a438c9deb082205f28e353/React Native DevTools-linux-x64/chrome-sandbox is owned by root and has mode 4755.\n"]}
+{"_e":"metro:client_log","_t":1780099939053,"level":"error","data":["Project is incompatible with this version of Expo Go\n\nThis project requires a newer version of Expo Go.\n\nHow to fix this error:\nDownload the latest version of Expo Go from the Play Store."]}

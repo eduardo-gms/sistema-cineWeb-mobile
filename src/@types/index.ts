@@ -70,6 +70,13 @@ export interface TokenRefreshResponse {
   refreshToken: string;
 }
 
+export interface PedidoLanche {
+  id?: string;
+  nome?: string;
+  quantidade: number;
+  subtotalFormatado?: string;
+}
+
 export interface Pedido {
   id: string;
   usuarioId?: string;
@@ -77,5 +84,7 @@ export interface Pedido {
   qtdInteira: number;
   qtdMeia: number;
   dataHora: string;
+  criadoEm?: string;
   ingressos: Ingresso[];
+  lanches?: PedidoLanche[];
 }

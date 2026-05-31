@@ -14,7 +14,7 @@ export const storage = {
 
   async saveAccessToken(token: string): Promise<void> {
     try {
-      await SecureStore.setItemAsync(ACCESS_TOKEN_KEY, token);
+      await AsyncStorage.setItem(ACCESS_TOKEN_KEY, token);
     } catch (error) {
       console.error('Erro ao salvar access token:', error);
     }
@@ -22,7 +22,7 @@ export const storage = {
 
   async getAccessToken(): Promise<string | null> {
     try {
-      return await SecureStore.getItemAsync(ACCESS_TOKEN_KEY);
+      return await AsyncStorage.getItem(ACCESS_TOKEN_KEY);
     } catch (error) {
       console.error('Erro ao recuperar access token:', error);
       return null;
@@ -31,7 +31,7 @@ export const storage = {
 
   async deleteAccessToken(): Promise<void> {
     try {
-      await SecureStore.deleteItemAsync(ACCESS_TOKEN_KEY);
+      await AsyncStorage.removeItem(ACCESS_TOKEN_KEY);
     } catch (error) {
       console.error('Erro ao deletar access token:', error);
     }
@@ -39,7 +39,7 @@ export const storage = {
 
   async saveRefreshToken(token: string): Promise<void> {
     try {
-      await SecureStore.setItemAsync(REFRESH_TOKEN_KEY, token);
+      await AsyncStorage.setItem(REFRESH_TOKEN_KEY, token);
     } catch (error) {
       console.error('Erro ao salvar refresh token:', error);
     }
@@ -47,7 +47,7 @@ export const storage = {
 
   async getRefreshToken(): Promise<string | null> {
     try {
-      return await SecureStore.getItemAsync(REFRESH_TOKEN_KEY);
+      return await AsyncStorage.getItem(REFRESH_TOKEN_KEY);
     } catch (error) {
       console.error('Erro ao recuperar refresh token:', error);
       return null;
@@ -56,7 +56,7 @@ export const storage = {
 
   async deleteRefreshToken(): Promise<void> {
     try {
-      await SecureStore.deleteItemAsync(REFRESH_TOKEN_KEY);
+      await AsyncStorage.removeItem(REFRESH_TOKEN_KEY);
     } catch (error) {
       console.error('Erro ao deletar refresh token:', error);
     }

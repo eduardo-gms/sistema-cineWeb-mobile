@@ -3,7 +3,7 @@ import storage from './storage';
 import { Ingresso, Pedido } from '../@types';
 
 export interface SyncTicketsResult {
-  data: Ingresso[];
+  data: Pedido[];
   isOfflineData: boolean;
   error?: string;
 }
@@ -20,30 +20,22 @@ export const ticketService = {
       const response = await api.get<Pedido[]>('/pedidos/meus', { timeout: 8000 });
       const pedidos = response.data;
 
-      // 2. Extrai todos os ingressos dos pedidos, enriquecidos com dados de sessão/filme/sala
-      const tickets: Ingresso[] = pedidos.flatMap((pedido) =>
-        (pedido.ingressos || []).map((ing) => ({
-          ...ing,
-          pedidoId: pedido.id,
-        })),
-      );
-
-      // 3. Salva no cache local para acesso offline
-      await storage.saveTicketsCache(tickets);
+      // 2. Salva no cache local para acesso offline (agora salva Pedidos inteiros)
+      await storage.saveTicketsCache(pedidos);
 
       return {
-        data: tickets,
+        data: pedidos,
         isOfflineData: false,
       };
     } catch (error) {
       console.warn('Falha ao conectar com a API CineWeb. Iniciando modo offline (DB Sync)...');
 
-      // 4. Em caso de falha, recupera o cache local
-      const cachedTickets = await storage.getTicketsCache<Ingresso>();
+      // 3. Em caso de falha, recupera o cache local
+      const cachedPedidos = await storage.getTicketsCache<Pedido>();
 
-      if (cachedTickets && cachedTickets.length > 0) {
+      if (cachedPedidos && cachedPedidos.length > 0) {
         return {
-          data: cachedTickets,
+          data: cachedPedidos,
           isOfflineData: true,
         };
       }

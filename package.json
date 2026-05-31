@@ -9,24 +9,28 @@
     "ts:check": "tsc"
   },
   "dependencies": {
-    "@react-native-async-storage/async-storage": "2.2.0",
+    "@expo/vector-icons": "^15.0.3",
+    "@react-native-async-storage/async-storage": "~2.1.0",
     "@react-navigation/bottom-tabs": "^6.5.20",
     "@react-navigation/native": "^6.1.17",
     "@react-navigation/native-stack": "^6.9.26",
     "axios": "^1.6.8",
-    "expo": "^56.0.3",
-    "expo-secure-store": "~56.0.4",
-    "react": "19.2.3",
-    "react-native": "0.85.3",
+    "expo": "~54.0.0",
+    "expo-constants": "~18.0.13",
+    "expo-print": "~15.0.8",
+    "expo-secure-store": "~14.0.1",
+    "expo-sharing": "~14.0.8",
+    "react": "19.1.0",
+    "react-native": "0.81.5",
     "react-native-qrcode-svg": "^6.3.1",
-    "react-native-safe-area-context": "~5.7.0",
-    "react-native-screens": "4.25.1",
-    "react-native-svg": "15.15.4",
+    "react-native-safe-area-context": "~5.6.0",
+    "react-native-screens": "~4.16.0",
+    "react-native-svg": "~15.11.0",
     "zustand": "^4.5.2"
   },
   "devDependencies": {
     "@babel/core": "^7.20.0",
-    "@types/react": "~18.2.45",
+    "@types/react": "~19.1.0",
     "typescript": "^5.5.2"
   },
   "private": true

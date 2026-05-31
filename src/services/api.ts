@@ -1,17 +1,33 @@
 import axios from 'axios';
 import { Platform } from 'react-native';
+import Constants from 'expo-constants';
 import storage from './storage';
 import { useAuthStore } from '../store/useAuthStore';
 import { TokenRefreshResponse } from '../@types';
 
 // URL base padrão da API.
+// Em dispositivo físico via Expo Go, usa o IP do host detectado pelo Metro bundler.
 // No Android Emulator, localhost é mapeado para 10.0.2.2.
-// Em dispositivo físico, configure REACT_NATIVE_PACKAGER_HOSTNAME ou substitua pelo IP local.
-const DEFAULT_API_URL = Platform.select({
-  android: 'http://10.0.2.2:3000',
-  ios: 'http://localhost:3000',
-  default: 'http://localhost:3000',
-});
+const getApiUrl = () => {
+  // Tenta obter o IP do host a partir do debuggerHost do Expo (funciona no Expo Go)
+  const debuggerHost = Constants.expoConfig?.hostUri || Constants.manifest2?.extra?.expoGo?.debuggerHost || '';
+  const hostIp = debuggerHost.split(':')[0];
+
+  if (hostIp) {
+    return `http://${hostIp}:3000`;
+  }
+
+  // Fallback para emulador/simulador
+  return Platform.select({
+    android: 'http://10.0.2.2:3000',
+    ios: 'http://localhost:3000',
+    default: 'http://localhost:3000',
+  })!;
+};
+
+const DEFAULT_API_URL = getApiUrl();
+
+console.log('[CineWeb Mobile] API URL:', DEFAULT_API_URL);
 
 const api = axios.create({
   baseURL: DEFAULT_API_URL,
